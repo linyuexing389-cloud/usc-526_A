@@ -1279,28 +1279,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "To escape the crumbling manor, you must master the ancient protocols of
-    the Aether Hub:\nI. The Great Flip (WASD)\nThe Manor is your toy. Press W, A,
-    S, or D to flip the gravity of the entire labyrinth. Use the fall to navigate,
-    but beware: the Eternal Sentinels are immortal. Gravity will shift them, but
-    it will never kill them. You must outsmart them, not outfight them.\n\nII. Dual
-    Resonance (Toggle '1' & '2')\nThe Hub grants you two distinct states of existence:\n\nThe
-    Swift Ghost (Form 1): Your default state. Light and nimble. It is easier to control,
-    providing a higher margin for error against traps.\n\nThe Crushing Juggernaut
-    (Form 2): Gain massive weight. In this form, you can shatter fragile wooden walls,
-    but you will fall much faster, making it perilous to avoid deadly spikes and
-    traps.\n\nIII. Life and Alchemical Essence\nYour vitality is tied to your physical
-    form. Your health will not drain over time, but the Manor\u2019s traps and guards
-    are lethal.\n\nDamage: Touching spikes or Sentinels will wound you.\n\nGreen
-    Alchemical Pills: Consume these glowing essences to mend your wounds and restore
-    your health.\n\nIV. The Temporal Collapse\nThe Hub is dying. You must reach the
-    exit before the timer hits zero.\n\nChronos Fragments (Radiant Blue Crystals):
-    These shards of frozen time are hidden in the shadows. Collecting them will temporarily
-    stabilize the Hub, granting you precious extra seconds to escape.\n\nV. The Veiled
-    Truth (Hidden Paths)\nNot all walls are built of stone. Many fragile barriers
-    conceal Hidden Exits, secret hoards of treasure, or even lethal traps. Switch
-    to your Juggernaut form to smash through these deceptions and reveal the true
-    path to freedom."
+  m_text: "I. The Great Flip \u2014 W / A / S / D\n\nFlip the entire labyrinth\u2019s
+    gravity.\n\nRotate the world\n\nFall to reposition\n\n\n\nII. Dual Resonance
+    \u2014 1 / 2\n\nToggle between two existence states.\n\n1 \u2014 Physical State\n\n2
+    \u2014 Spectral State\n\nShift forms to solve puzzles, bypass threats, and survive."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1327,7 +1309,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 23.15
+  m_fontSize: 36.55
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
