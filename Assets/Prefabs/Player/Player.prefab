@@ -160,7 +160,7 @@ MonoBehaviour:
   heavyMass: 5
   heavyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   heavyDamping: 0.01
-  heavyScaleMultiplier: 2
+  heavyScaleMultiplier: 1.2
   heavySpeedMultiplier: 2
 --- !u!114 &5950215670795418628
 MonoBehaviour:
