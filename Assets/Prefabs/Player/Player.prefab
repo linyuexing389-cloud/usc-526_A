@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 7478264413877507926}
   - component: {fileID: 5950215670795418628}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -160,6 +160,8 @@ MonoBehaviour:
   heavyMass: 5
   heavyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   heavyDamping: 0.01
+  heavyScaleMultiplier: 2
+  heavySpeedMultiplier: 2
 --- !u!114 &5950215670795418628
 MonoBehaviour:
   m_ObjectHideFlags: 0
