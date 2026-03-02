@@ -1,4 +1,5 @@
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class FragilePlank : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class FragilePlank : MonoBehaviour
     [Header("Linked Objects to Remove (联动彻底销毁)")]
     [Tooltip("撞开后，这些物体会彻底从场景中删除 (如：远端挡路的空气墙、装饰墙)")]
     [SerializeField] private GameObject[] objectsToDestroy;
+    public GameObject destroyVFXPrefab;
 
     private void Start()
     {
@@ -49,6 +51,7 @@ public class FragilePlank : MonoBehaviour
             {
                 if (obj != null)
                 {
+                    playVFX(obj);
                     obj.SetActive(true);
                     Debug.Log($"[Hidden Content] {obj.name} is now active.");
                 }
@@ -62,15 +65,49 @@ public class FragilePlank : MonoBehaviour
             {
                 if (target != null)
                 {
+                    playVFX(target);
                     Destroy(target);
                     Debug.Log($"[Linked Destruction] {target.name} has been erased.");
                 }
             }
         }
 
+
         // 3. 销毁这面触发墙本身
         Destroy(gameObject);
         
         Debug.Log("<color=yellow>Fragile Plank Broken!</color> Secrets revealed and linked walls removed.");
+    }
+
+
+    private void playVFX(GameObject target)
+    {
+        Vector3 pos = target.transform.position;
+        GameObject vfx = Instantiate(destroyVFXPrefab, pos, Quaternion.identity);
+        Vector3 size = GetWallSize(target);
+
+        // 修改粒子 Shape
+        var ps = vfx.GetComponent<ParticleSystem>();
+        var shape = ps.shape;
+        shape.scale = size;
+    }
+
+    private Vector3 GetWallSize(GameObject wall)
+    {
+        // 优先使用 Collider
+        Collider col3D = wall.GetComponent<Collider>();
+        if (col3D != null)
+            return col3D.bounds.size;
+
+        Collider2D col2D = wall.GetComponent<Collider2D>();
+        if (col2D != null)
+            return col2D.bounds.size;
+
+        // 兜底
+        Renderer r = wall.GetComponent<Renderer>();
+        if (r != null)
+            return r.bounds.size;
+
+        return Vector3.one;
     }
 }

@@ -1,17 +1,23 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
+
+    [Header("关卡逻辑")]
+    [Tooltip("如果是最后一关，请勾选此项；否则会尝试加载下一关")]
+    public bool isFinalLevel = true; // 默认设为 true，符合你现在的需求
+    public string nextSceneName = "cube_map 1";
 
     [Header("倒计时设置")]
     public float timeRemaining = 300f;
     private bool isGameOver = false;
 
     [Header("UI 引用")]
-    public TextMeshProUGUI timerText;    // 顶部的倒计时
-    public TextMeshProUGUI statusText;   // 屏幕中间的状态文字
+    public TextMeshProUGUI timerText;    
+    public TextMeshProUGUI statusText;   
 
     private void Awake()
     {
@@ -21,7 +27,6 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // 游戏开始时确保时间正常流动，状态文字为空
         Time.timeScale = 1; 
         if (statusText != null) statusText.text = "";
     }
@@ -42,56 +47,57 @@ public class GameManager : MonoBehaviour
         }
     }
 
-     void UpdateTimerDisplay(float time)
-{
-    if (timerText == null) return;
+    void UpdateTimerDisplay(float time)
+    {
+        if (timerText == null) return;
+        float displayTime = Mathf.Max(0, time); 
+        float minutes = Mathf.FloorToInt(displayTime / 60);
+        float seconds = Mathf.FloorToInt(displayTime % 60);
+        timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+    }
 
-    // 修复点：强制不小于 0，防止出现 -01:-01
-    float displayTime = Mathf.Max(0, time); 
-
-    float minutes = Mathf.FloorToInt(displayTime / 60);
-    float seconds = Mathf.FloorToInt(displayTime % 60);
-    timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
-}
-
-    // --- 游戏结束逻辑 ---
+    // --- 核心逻辑修改点 ---
 
     public void WinGame()
     {
         if (isGameOver) return;
-        EndGame("win");
+
+        if (isFinalLevel)
+        {
+            // 如果是最后一关：显示胜利文字，停止游戏
+            EndGame("WIN");
+        }
+        else
+        {
+            // 如果不是最后一关：确保时间流动并跳转场景
+            Time.timeScale = 1; 
+            SceneManager.LoadScene(nextSceneName);
+        }
     }
 
     public void LoseGame()
     {
         if (isGameOver) return;
-        EndGame("lose");
+        EndGame("LOSE");
     }
 
     private void EndGame(string message)
     {
         isGameOver = true;
         
-        // 停止游戏时间（这会停止物理模拟和所有依赖 Time.deltaTime 的逻辑）
+        // 游戏结束时停止时间（如果是胜利，玩家可以停下来欣赏战果）
         Time.timeScale = 0; 
 
-        // 显示状态文字
         if (statusText != null)
         {
             statusText.text = message;
             statusText.gameObject.SetActive(true);
         }
-        
-        Debug.Log("Game Over: " + message);
     }
-    // 在 GameManager.cs 中添加这个方法
+
     public void AddTime(float amount)
     {
-        if (isGameOver) return; // 如果游戏已经结束（显示了文字），就不加时间了
-        
+        if (isGameOver) return; 
         timeRemaining += amount;
-        
-        // 可选：为了让玩家反馈更明显，你可以在这里让倒计时文字闪烁一下
-        Debug.Log("增加时间: " + amount + "s");
     }
 }

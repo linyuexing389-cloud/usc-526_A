@@ -126,3 +126,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FragilePlank
   requiredMass: 4
+  hiddenObjects: []
+  objectsToDestroy: []
+  destroyVFXPrefab: {fileID: 3643244508506189358, guid: 1b43102e0f64e483692d6c0b35057b22, type: 3}
