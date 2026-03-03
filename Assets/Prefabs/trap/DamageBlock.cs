@@ -16,7 +16,8 @@ public class DamageBlock : MonoBehaviour
             // 检查冷却时间
             if (Time.time - lastDamageTime >= damageCooldown)
             {
-                playerHealth.TakeDamage(damageAmount);
+                // 这里视为 Trap 类型伤害
+                playerHealth.TakeDamage(damageAmount, DeathCause.Trap);
                 lastDamageTime = Time.time;
             }
         }

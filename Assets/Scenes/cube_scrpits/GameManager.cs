@@ -43,6 +43,16 @@ public class GameManager : MonoBehaviour
         else
         {
             timeRemaining = 0;
+
+            // 记录一次超时死亡（没有直接 HP 变化）
+            float hpRemaining = -1f;
+            var player = FindAnyObjectByType<PlayerHealth>();
+            if (player != null)
+            {
+                hpRemaining = player.currentHealth;
+            }
+            DeathAnalyticsManager.LogDeath(DeathCause.Timeout, timeRemaining, hpRemaining);
+
             LoseGame();
         }
     }
@@ -93,6 +103,9 @@ public class GameManager : MonoBehaviour
             statusText.text = message;
             statusText.gameObject.SetActive(true);
         }
+
+        if (message == "LOSE")
+            DeathAnalyticsGraphUI.ShowOnGameOver();
     }
 
     public void AddTime(float amount)
