@@ -10,9 +10,14 @@ public class ColorDoor : MonoBehaviour
         {
             PlayerInventory inventory = collision.gameObject.GetComponent<PlayerInventory>();
             
+            // 检查背包是否为空，并且是否有该颜色的钥匙
             if (inventory != null && inventory.HasKey(requiredColor))
             {
                 Debug.Log($"使用 {requiredColor} 钥匙，门开了！");
+                
+                // 【核心修改】：消耗掉一把对应颜色的钥匙
+                inventory.UseKey(requiredColor); 
+                
                 OpenDoor();
             }
             else
