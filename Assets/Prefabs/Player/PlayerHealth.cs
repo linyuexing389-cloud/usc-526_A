@@ -10,6 +10,9 @@ public class PlayerHealth : MonoBehaviour
     [Header("UI 引用")]
     public Slider healthSlider;
 
+    // 记录最后一次造成伤害的来源（用于统计 Spikes / Trap）
+    private DeathCause lastDamageCause = DeathCause.Trap;
+
     void Start()
     {
         currentHealth = maxHealth;
@@ -25,6 +28,13 @@ public class PlayerHealth : MonoBehaviour
         UpdateUI();
 
         if (currentHealth <= 0) Die();
+    }
+
+    // 带来源标记的重载，用于区分 Trap/HP
+    public void TakeDamage(float amount, DeathCause cause)
+    {
+        lastDamageCause = cause;
+        TakeDamage(amount);
     }
 
     // --- 2. 回血逻辑 (新增功能) ---
@@ -61,6 +71,10 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("似了喵~");
         if (GameManager.Instance != null)
         {
+            // 记录一次 HP/Trap 死亡
+            float timeRemaining = GameManager.Instance.timeRemaining;
+            DeathAnalyticsManager.LogDeath(lastDamageCause, timeRemaining, currentHealth);
+
             GameManager.Instance.LoseGame();
         }
     }
