@@ -2104,6 +2104,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2229,6 +2230,18 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae3c0ca4dc099ee478f41232e95258c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraShake
 --- !u!1 &349655133
 GameObject:
   m_ObjectHideFlags: 0
@@ -3712,7 +3725,7 @@ Transform:
   m_GameObject: {fileID: 621462018}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.00009992717, w: 1}
-  m_LocalPosition: {x: 1.07, y: -4.62, z: 0.00999999}
+  m_LocalPosition: {x: 1.07, y: -4.99, z: 0.00999999}
   m_LocalScale: {x: 5.4524255, y: 0.26076323, z: 0.99}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7140,8 +7153,8 @@ Transform:
   m_GameObject: {fileID: 1447867605}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0.7069353, w: 0.7072783}
-  m_LocalPosition: {x: -1.72, y: -3.54, z: 0.00999999}
-  m_LocalScale: {x: 2.4318748, y: 0.26076323, z: 0.99}
+  m_LocalPosition: {x: -1.72, y: -3.6, z: 0.00999999}
+  m_LocalScale: {x: 3.0101745, y: 0.26076323, z: 0.99}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1074570932}
@@ -7476,7 +7489,7 @@ Transform:
   m_GameObject: {fileID: 1544087098}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0.7069353, w: 0.7072783}
-  m_LocalPosition: {x: 3.72, y: -3.96, z: 0.00999999}
+  m_LocalPosition: {x: 3.72, y: -4.27, z: 0.00999999}
   m_LocalScale: {x: 1.5787755, y: 0.26076323, z: 0.99}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9419,6 +9432,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 3119039239488139022, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
+      propertyPath: m_Radius
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3345795466109223736, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5353161216919360220, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -9433,11 +9454,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5353161216919360220, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -13.25
+      value: 3.34
       objectReference: {fileID: 0}
     - target: {fileID: 5353161216919360220, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.35
+      value: -5.66
       objectReference: {fileID: 0}
     - target: {fileID: 5353161216919360220, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9488,15 +9509,28 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 467214442}
     - target: {fileID: 7478264413877507926, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
+      propertyPath: windEffect
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7478264413877507926, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
       propertyPath: smallCollider
       value: 
       objectReference: {fileID: 595071297}
     - target: {fileID: 7478264413877507926, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
+      propertyPath: groundLayer.m_Bits
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7478264413877507926, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
       propertyPath: heavyScaleMultiplier
       value: 1.2
       objectReference: {fileID: 0}
+    - target: {fileID: 7478264413877507926, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
+      propertyPath: impactSpeedThreshold
+      value: 8
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 6037880832205406491, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 3011476110820089858, guid: 3dfe0db3985d84ddab1696f6dc421aab, type: 3}

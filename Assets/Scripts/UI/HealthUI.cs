@@ -28,7 +28,7 @@ public class HealthUI : MonoBehaviour
 
         if (_slider.value <= 0)
         {
-            Debug.Log("ui = 0");
+           // Debug.Log("ui = 0");
             //_healthForeground.gameObject.SetActive(false);
         }
         else
@@ -37,16 +37,16 @@ public class HealthUI : MonoBehaviour
 
             if (_slider.value >= _slider.maxValue)
             {
-                Debug.Log(_colorAtFullHealth);
+                //Debug.Log(_colorAtFullHealth);
                 _colorAtFullHealth.a = 1f;
                 _healthForeground.color = _colorAtFullHealth;
-            Debug.Log("2");
+            //Debug.Log("2");
 
             }
             else
             {
                 _healthForeground.color = _healthGradient.Evaluate((float)_slider.value / _slider.maxValue);
-                Debug.Log("3");
+               // Debug.Log("3");
 
             }
         }

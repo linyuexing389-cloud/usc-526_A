@@ -27,10 +27,22 @@ public class BallSwitcher : MonoBehaviour
     [Header("Collision Check")]
     public LayerMask obstacleLayer;
 
-    private bool isHeavy = false;
-    private bool isScaling = false;
-    private Vector3 visualTargetScale;
-    private Vector3 visualOriginalScale;
+
+    [Header("Impact")]
+    public float impactSpeedThreshold = 30f;
+    public float shakeBaseIntensity = 0.08f;
+    public float shakeDuration = 0.15f;
+
+    bool isHeavy = false;
+    bool isScaling = false;
+    [Header("Bottom Check")]
+    public float bottomRayLength = 0.6f;
+    bool isGrounded;
+
+
+    Vector3 visualTargetScale;
+    Vector3 visualOriginalScale;
+    Vector3 lastVelocity;
 
     void Start()
     {
@@ -39,8 +51,16 @@ public class BallSwitcher : MonoBehaviour
         ApplyNormalPhysics();
         smallCollider.enabled = true;
         largeCollider.enabled = false;
+
     }
 
+    void FixedUpdate()
+    {
+        lastVelocity = rb.linearVelocity;
+
+        isGrounded = false;
+
+    }
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Q))
@@ -53,7 +73,14 @@ public class BallSwitcher : MonoBehaviour
 
         HandleVisualScale();
     }
+    bool IsBottomHit()
+    {
+        Vector3 gravityDir = Physics.gravity.normalized;
+        Vector3 rayOrigin = transform.position;
+        Vector3 rayDir = gravityDir;   // 向重力方向射线
 
+        return Physics.Raycast(rayOrigin, rayDir, bottomRayLength);
+    }
     void TrySwitchToHeavy()
     {
         if (!CanUseLargeCollider())
@@ -81,6 +108,7 @@ public class BallSwitcher : MonoBehaviour
 
         visualTargetScale = visualOriginalScale;
         isScaling = true;
+
     }
 
     bool CanUseLargeCollider()
@@ -134,5 +162,61 @@ public class BallSwitcher : MonoBehaviour
         rb.angularDamping = normalDamping * 0.1f;
         meshRenderer.material.color = normalColor;
         rb.linearVelocity /= heavySpeedMultiplier;
+    }
+
+    // -----------------------------
+    // 使用接触法线判断接地
+    // -----------------------------
+    void OnCollisionStay(Collision collision)
+    {
+        foreach (ContactPoint contact in collision.contacts)
+        {
+            // 如果接触法线和“反重力方向”接近
+            float dot = Vector3.Dot(
+                contact.normal,
+                -Physics.gravity.normalized
+            );
+
+            if (dot > 0.5f)   // 约 60° 以内视为支撑面
+            {
+                isGrounded = true;
+                return;
+            }
+        }
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (!isHeavy) return;
+        Debug.Log(IsBottomHit());
+        if (!IsBottomHit()) return;   // 关键过滤
+
+        Vector3 gravityDir = Physics.gravity.normalized;
+        float fallSpeed = Vector3.Dot(lastVelocity, gravityDir);
+
+        if (fallSpeed > impactSpeedThreshold)
+        {
+            float t = Mathf.InverseLerp(
+                impactSpeedThreshold,
+                impactSpeedThreshold * 2f,
+                fallSpeed
+            );
+
+            float intensity = t * shakeBaseIntensity;
+
+            if (CameraShake.Instance != null)
+                CameraShake.Instance.Shake(intensity, shakeDuration);
+        }
+    }
+    void OnDrawGizmos()
+    {
+        if (!Application.isPlaying) return;
+
+        Vector3 gravityDir = Physics.gravity.normalized;
+        Vector3 rayOrigin = transform.position;
+        Vector3 rayEnd = rayOrigin + gravityDir * bottomRayLength;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(rayOrigin, rayEnd);
     }
 }
