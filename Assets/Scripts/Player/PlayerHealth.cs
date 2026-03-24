@@ -9,14 +9,22 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("UI 引用")]
     public Slider healthSlider;
+    HealthUI Heahtui;
+
+
 
     // 记录最后一次造成伤害的来源（用于统计 Spikes / Trap）
     private DeathCause lastDamageCause = DeathCause.Trap;
-
-    void Start()
+    private void Awake()
     {
         currentHealth = maxHealth;
-        UpdateUI(); // 初始化 UI 状态
+    }
+    void Start()
+    {
+        Heahtui = healthSlider.GetComponent<HealthUI>();
+        Heahtui._updateWithHealth(currentHealth);
+
+        //UpdateUI(); // 初始化 UI 状态
     }
 
     // --- 1. 受伤逻辑 (保留并优化了你的原始逻辑) ---
@@ -25,7 +33,8 @@ public class PlayerHealth : MonoBehaviour
         currentHealth -= amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
-        UpdateUI();
+        //UpdateUI();
+        Heahtui._updateWithHealth(currentHealth);
 
         if (currentHealth <= 0) Die();
     }
@@ -42,29 +51,30 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHealth += amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        Heahtui._updateWithHealth(currentHealth);
 
-        UpdateUI();
+        //UpdateUI();
         Debug.Log($"吃到血包！当前血量: {currentHealth}");
     }
 
     // --- 3. UI 更新中心 (整合了你之前的 FillRect 修复逻辑) ---
-    private void UpdateUI()
-{
-    if (healthSlider != null)
-    {
-        Debug.Log($"准备更新UI，当前血量：{currentHealth}，Slider当前值：{healthSlider.value}"); // 加这句
-        healthSlider.value = currentHealth;
-        
-        if (healthSlider.fillRect != null)
-        {
-            healthSlider.fillRect.gameObject.SetActive(currentHealth > 0.1f);
-        }
-    }
-    else
-    {
-        Debug.LogError("警告：PlayerHealth 找不到 Slider 引用！"); // 加这句
-    }
-}
+    //private void UpdateUI()
+    //{
+    //    if (healthSlider != null)
+    //    {
+    //        Debug.Log($"准备更新UI，当前血量：{currentHealth}，Slider当前值：{healthSlider.value}"); // 加这句
+    //        healthSlider.value = currentHealth;
+
+    //        if (healthSlider.fillRect != null)
+    //        {
+    //            healthSlider.fillRect.gameObject.SetActive(currentHealth > 0.1f);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Debug.LogError("警告：PlayerHealth 找不到 Slider 引用！"); // 加这句
+    //    }
+    //}
 
     private void Die()
     {
