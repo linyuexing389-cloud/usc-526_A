@@ -8,9 +8,10 @@ public class Key : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            PlayerInventory inventory = other.GetComponent<PlayerInventory>();
+            PlayerInventory inventory = other.GetComponentInParent<PlayerInventory>();
             if (inventory != null)
             {
+                Debug.Log("player touched");
                 inventory.AddKey(colorID);
                 Destroy(gameObject); // 钥匙消失
             }
