@@ -1,31 +1,40 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 /// <summary>
-/// In-game bar chart for Death Cause Distribution. Works in WebGL.
-/// Toggle with F2; also shown automatically when game ends (LOSE).
+/// Full death screen: LOSE header + death cause bar chart + Retry button.
+/// Created programmatically so it works in both scenes without scene setup.
+/// Toggle with F2 during play; shown automatically on LOSE.
 /// </summary>
 public class DeathAnalyticsGraphUI : MonoBehaviour
 {
     [Header("Display")]
     public KeyCode toggleKey = KeyCode.F2;
-    public float barMaxHeight = 200f;
-    public float barWidth = 80f;
+    public float barMaxWidth = 200f;
     public Color barTimeout = new Color(0.9f, 0.6f, 0.2f);
     public Color barSpikes = new Color(0.9f, 0.25f, 0.2f);
     public Color barTrap = new Color(0.2f, 0.5f, 0.9f);
 
     private GameObject root;
-    private Image panelImage;
     private Image barTimeoutImg, barSpikesImg, barTrapImg;
-    private Text labelTitle, labelTimeout, labelSpikes, labelTrap;
     private Text countTimeout, countSpikes, countTrap;
+    private bool _isVisible = false;
 
     private void Start()
     {
         EnsureCanvas();
-        if (root != null)
+        // 如果 Show() 在 Start() 之前被调用（动态创建时），保持可见状态
+        if (root != null && !_isVisible)
             root.SetActive(false);
+    }
+
+    private void OnEnable()  { SceneManager.sceneLoaded += OnSceneLoaded; }
+    private void OnDisable() { SceneManager.sceneLoaded -= OnSceneLoaded; }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Hide();
     }
 
     private void Update()
@@ -36,6 +45,7 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
 
     public void Show()
     {
+        _isVisible = true;
         EnsureCanvas();
         if (root == null) return;
         RefreshBars();
@@ -44,6 +54,7 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
 
     public void Hide()
     {
+        _isVisible = false;
         if (root != null)
             root.SetActive(false);
     }
@@ -56,7 +67,6 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         else { RefreshBars(); root.SetActive(true); }
     }
 
-    /// <summary>Call from GameManager when game ends with LOSE so the graph shows in WebGL.</summary>
     public static void ShowOnGameOver()
     {
         var graph = FindObjectOfType<DeathAnalyticsGraphUI>();
@@ -72,89 +82,131 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100;
-        canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        var scaler = canvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
         canvasGo.AddComponent<GraphicRaycaster>();
 
-        root = new GameObject("DeathAnalyticsPanel");
+        // Root panel — centered, fixed size
+        root = new GameObject("DeathScreen");
         root.transform.SetParent(canvasGo.transform, false);
+        var rootRect = root.AddComponent<RectTransform>();
+        rootRect.anchorMin = new Vector2(0.5f, 0.5f);
+        rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+        rootRect.pivot = new Vector2(0.5f, 0.5f);
+        rootRect.sizeDelta = new Vector2(840, 680);
+        rootRect.anchoredPosition = Vector2.zero;
+        var bg = root.AddComponent<Image>();
+        bg.color = new Color(0.08f, 0.08f, 0.12f, 0.97f);
 
-        var rect = root.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(400, 320);
-        rect.anchoredPosition = Vector2.zero;
+        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
+                 ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-        panelImage = root.AddComponent<Image>();
-        panelImage.color = new Color(0.1f, 0.1f, 0.15f, 0.95f);
+        // ── LOSE header ──────────────────────────────────────────────
+        AddText(root, "LOSE", 96, FontStyle.Bold, new Vector2(0, 260), new Vector2(520, 110), font)
+            .color = new Color(0.95f, 0.25f, 0.25f);
 
-        float y = 120f;
+        // ── Stats title ──────────────────────────────────────────────
+        AddText(root, "Death Cause Distribution", 26, FontStyle.Normal, new Vector2(0, 175), new Vector2(460, 36), font)
+            .color = new Color(0.85f, 0.85f, 0.85f);
+
+        // ── Bar rows ─────────────────────────────────────────────────
+        float rowY = 100f;
         float rowH = 70f;
 
-        labelTitle = AddText(root, "Death Cause Distribution", 24, new Vector2(0, y));
-        y -= rowH;
+        barTimeoutImg = AddBarRow(root, "Timeout",       barTimeout, rowY,            font, out countTimeout);
+        barSpikesImg  = AddBarRow(root, "Spikes (ball)", barSpikes,  rowY - rowH,     font, out countSpikes);
+        barTrapImg    = AddBarRow(root, "Trap (wall)",   barTrap,    rowY - rowH * 2, font, out countTrap);
 
-        labelTimeout = AddText(root, "Timeout", 16, new Vector2(-120, y));
-        barTimeoutImg = AddBar(root, barTimeout, new Vector2(-20, y), out countTimeout);
-        y -= rowH;
+        // ── Retry button ─────────────────────────────────────────────
+        var btnGo = new GameObject("RetryButton");
+        btnGo.transform.SetParent(root.transform, false);
+        var btnRect = btnGo.AddComponent<RectTransform>();
+        btnRect.anchorMin = new Vector2(0.5f, 0.5f);
+        btnRect.anchorMax = new Vector2(0.5f, 0.5f);
+        btnRect.pivot = new Vector2(0.5f, 0.5f);
+        btnRect.sizeDelta = new Vector2(240, 65);
+        btnRect.anchoredPosition = new Vector2(0, -255);
 
-        labelSpikes = AddText(root, "Spikes (red ball)", 16, new Vector2(-120, y));
-        barSpikesImg = AddBar(root, barSpikes, new Vector2(-20, y), out countSpikes);
-        y -= rowH;
+        var btnImg = btnGo.AddComponent<Image>();
+        btnImg.color = new Color(0.2f, 0.6f, 0.2f);
+        btnGo.AddComponent<CanvasRenderer>();
 
-        labelTrap = AddText(root, "Trap (red wall)", 16, new Vector2(-120, y));
-        barTrapImg = AddBar(root, barTrap, new Vector2(-20, y), out countTrap);
+        var btn = btnGo.AddComponent<Button>();
+        btn.targetGraphic = btnImg;
+        var colors = btn.colors;
+        colors.highlightedColor = new Color(0.3f, 0.75f, 0.3f);
+        colors.pressedColor     = new Color(0.15f, 0.45f, 0.15f);
+        btn.colors = colors;
+        btn.onClick.AddListener(() =>
+        {
+            if (GameManager.Instance != null) GameManager.Instance.RetryGame();
+        });
 
-        var closeHint = AddText(root, "Press " + toggleKey + " to close", 12, new Vector2(0, -130));
-        closeHint.color = new Color(0.7f, 0.7f, 0.7f);
+        var btnLabel = AddText(btnGo, "Retry", 32, FontStyle.Bold, Vector2.zero, new Vector2(240, 65), font);
+        btnLabel.color = Color.white;
+        btnLabel.alignment = TextAnchor.MiddleCenter;
     }
 
-    private static Text AddText(GameObject parent, string content, int fontSize, Vector2 pos)
+    // Adds a horizontal bar row: [label]  [====bar====]  [count]
+    private Image AddBarRow(GameObject parent, string label, Color color, float y, Font font, out Text countText)
     {
-        var go = new GameObject("Text");
+        float labelX = -185f;
+        float barX   = -40f;
+        float countX = 130f;
+
+        AddText(parent, label, 20, FontStyle.Normal, new Vector2(labelX, y), new Vector2(150, 32), font)
+            .alignment = TextAnchor.MiddleRight;
+
+        var barGo = new GameObject("Bar");
+        barGo.transform.SetParent(parent.transform, false);
+        var barRect = barGo.AddComponent<RectTransform>();
+        barRect.anchorMin = new Vector2(0.5f, 0.5f);
+        barRect.anchorMax = new Vector2(0.5f, 0.5f);
+        barRect.pivot = new Vector2(0f, 0.5f);  // grows right
+        barRect.sizeDelta = new Vector2(8f, 30f);
+        barRect.anchoredPosition = new Vector2(barX, y);
+        var barImg = barGo.AddComponent<Image>();
+        barImg.color = color;
+        barGo.AddComponent<CanvasRenderer>();
+
+        var cntGo = new GameObject("Count");
+        cntGo.transform.SetParent(parent.transform, false);
+        var cntRect = cntGo.AddComponent<RectTransform>();
+        cntRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cntRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cntRect.sizeDelta = new Vector2(60, 32);
+        cntRect.anchoredPosition = new Vector2(countX, y);
+        countText = cntGo.AddComponent<Text>();
+        countText.font = font;
+        countText.fontSize = 20;
+        countText.color = Color.white;
+        countText.text = "0";
+        countText.alignment = TextAnchor.MiddleLeft;
+
+        return barImg;
+    }
+
+    private static Text AddText(GameObject parent, string content, int fontSize, FontStyle style,
+                                Vector2 pos, Vector2 size, Font font)
+    {
+        var go = new GameObject("Text_" + content);
         go.transform.SetParent(parent.transform, false);
         var rect = go.AddComponent<RectTransform>();
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(280, 30);
+        rect.sizeDelta = size;
         rect.anchoredPosition = pos;
+        go.AddComponent<CanvasRenderer>();
         var t = go.AddComponent<Text>();
         t.text = content;
         t.fontSize = fontSize;
-        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+        t.fontStyle = style;
         if (font != null) t.font = font;
         t.color = Color.white;
+        t.alignment = TextAnchor.MiddleCenter;
         return t;
-    }
-
-    private static Image AddBar(GameObject parent, Color c, Vector2 pos, out Text countText)
-    {
-        var barGo = new GameObject("Bar");
-        barGo.transform.SetParent(parent.transform, false);
-        var rect = barGo.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0, 0.5f);
-        rect.sizeDelta = new Vector2(80, 24);
-        rect.anchoredPosition = pos;
-        var img = barGo.AddComponent<Image>();
-        img.color = c;
-
-        var countGo = new GameObject("Count");
-        countGo.transform.SetParent(parent.transform, false);
-        var countRect = countGo.AddComponent<RectTransform>();
-        countRect.anchorMin = new Vector2(0.5f, 0.5f);
-        countRect.anchorMax = new Vector2(0.5f, 0.5f);
-        countRect.anchoredPosition = pos + new Vector2(60, 0);
-        countRect.sizeDelta = new Vector2(60, 24);
-        countText = countGo.AddComponent<Text>();
-        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-        if (font != null) countText.font = font;
-        countText.fontSize = 14;
-        countText.color = Color.white;
-        countText.text = "0";
-        return img;
     }
 
     private void RefreshBars()
@@ -163,25 +215,24 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         if (DeathAnalyticsManager.Instance != null)
             DeathAnalyticsManager.Instance.GetDeathCauseCounts(out timeout, out spikes, out trap);
 
+        SetBarWidth(barTimeoutImg, timeout);
+        SetBarWidth(barSpikesImg, spikes);
+        SetBarWidth(barTrapImg, trap);
+
         if (countTimeout != null) countTimeout.text = timeout.ToString();
-        if (countSpikes != null) countSpikes.text = spikes.ToString();
-        if (countTrap != null) countTrap.text = trap.ToString();
-
-        int max = Mathf.Max(1, Mathf.Max(timeout, Mathf.Max(spikes, trap)));
-        float scale = barMaxHeight / max;
-
-        if (barTimeoutImg != null)
-            SetBarHeight(barTimeoutImg.rectTransform, timeout * scale);
-        if (barSpikesImg != null)
-            SetBarHeight(barSpikesImg.rectTransform, spikes * scale);
-        if (barTrapImg != null)
-            SetBarHeight(barTrapImg.rectTransform, trap * scale);
+        if (countSpikes  != null) countSpikes.text  = spikes.ToString();
+        if (countTrap    != null) countTrap.text     = trap.ToString();
     }
 
-    private static void SetBarHeight(RectTransform rect, float height)
+    private void SetBarWidth(Image bar, int count)
     {
-        var size = rect.sizeDelta;
-        size.y = Mathf.Max(8f, height);
-        rect.sizeDelta = size;
+        if (bar == null) return;
+        int timeout = 0, spikes = 0, trap = 0;
+        if (DeathAnalyticsManager.Instance != null)
+            DeathAnalyticsManager.Instance.GetDeathCauseCounts(out timeout, out spikes, out trap);
+        int max = Mathf.Max(1, timeout, spikes, trap);
+        var sz = bar.rectTransform.sizeDelta;
+        sz.x = Mathf.Max(8f, (float)count / max * barMaxWidth);
+        bar.rectTransform.sizeDelta = sz;
     }
 }

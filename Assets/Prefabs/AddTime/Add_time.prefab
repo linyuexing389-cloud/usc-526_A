@@ -127,4 +127,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0854262d660540b68f4b9d5df7bd8c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimePowerup
-  bonusTime: 10
+  bonusTime: 30
