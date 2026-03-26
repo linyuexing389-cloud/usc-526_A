@@ -11,8 +11,8 @@ public class Teleporter : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // 1. 检查碰到的物体是否有 Rigidbody (确保它是你的小球)
-        Rigidbody rb = other.GetComponent<Rigidbody>();
+        // 1. 检查碰到的物体是否有 Rigidbody（用 attachedRigidbody 支持子 Collider）
+        Rigidbody rb = other.attachedRigidbody;
 
         if (rb != null && destination != null)
         {

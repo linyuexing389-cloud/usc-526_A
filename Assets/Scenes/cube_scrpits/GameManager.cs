@@ -1,6 +1,8 @@
+using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,12 +14,12 @@ public class GameManager : MonoBehaviour
     public string nextSceneName = "cube_map 1";
 
     [Header("倒计时设置")]
-    public float timeRemaining = 300f;
+    public float timeRemaining = 120f;
     private bool isGameOver = false;
 
     [Header("UI 引用")]
-    public TextMeshProUGUI timerText;    
-    public TextMeshProUGUI statusText;   
+    public TextMeshProUGUI timerText;
+    public TextMeshProUGUI statusText; // WIN 时用
 
     private void Awake()
     {
@@ -27,7 +29,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        Time.timeScale = 1; 
+        Time.timeScale = 1;
         if (statusText != null) statusText.text = "";
     }
 
@@ -64,6 +66,7 @@ public class GameManager : MonoBehaviour
         float minutes = Mathf.FloorToInt(displayTime / 60);
         float seconds = Mathf.FloorToInt(displayTime % 60);
         timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+        timerText.color = (time <= 30f) ? Color.red : Color.white;
     }
 
     // --- 核心逻辑修改点 ---
@@ -98,19 +101,45 @@ public class GameManager : MonoBehaviour
         // 游戏结束时停止时间（如果是胜利，玩家可以停下来欣赏战果）
         Time.timeScale = 0; 
 
-        if (statusText != null)
+        if (message == "LOSE")
+        {
+            DeathAnalyticsGraphUI.ShowOnGameOver();
+        }
+        else if (statusText != null)
         {
             statusText.text = message;
             statusText.gameObject.SetActive(true);
         }
+    }
 
-        if (message == "LOSE")
-            DeathAnalyticsGraphUI.ShowOnGameOver();
+    public void RetryGame()
+    {
+        Time.timeScale = 1;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void AddTime(float amount)
     {
-        if (isGameOver) return; 
+        if (isGameOver) return;
         timeRemaining += amount;
+        if (_flashCoroutine != null) StopCoroutine(_flashCoroutine);
+        _flashCoroutine = StartCoroutine(FlashTimer(3f));
+    }
+
+    private Coroutine _flashCoroutine;
+    private IEnumerator FlashTimer(float duration)
+    {
+        float elapsed = 0f;
+        const float interval = 0.15f;
+        while (elapsed < duration)
+        {
+            timerText.alpha = 0f;
+            yield return new WaitForSeconds(interval);
+            timerText.alpha = 1f;
+            yield return new WaitForSeconds(interval);
+            elapsed += interval * 2f;
+        }
+        timerText.alpha = 1f;
+        _flashCoroutine = null;
     }
 }

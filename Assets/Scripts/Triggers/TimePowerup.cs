@@ -3,7 +3,7 @@ using UnityEngine;
 public class TimePowerup : MonoBehaviour
 {
     [Header("设置")]
-    public float bonusTime = 10f; // 增加多少秒
+    public float bonusTime = 30f; // 增加多少秒
 
     private void OnTriggerEnter(Collider other)
     {
