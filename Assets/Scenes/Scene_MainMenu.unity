@@ -1279,10 +1279,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "I. The Great Flip \u2014 W / A / S / D\n\nFlip the entire labyrinth\u2019s
-    gravity.\n\nRotate the world\n\nFall to reposition\n\n\n\nII. Dual Resonance
-    \u2014 1 / 2\n\nToggle between two existence states.\n\n1 \u2014 Physical State\n\n2
-    \u2014 Spectral State\n\nShift forms to solve puzzles, bypass threats, and survive."
+  m_text: "I. The Great Flip \u2014  A /  D\n\nFlip the entire labyrinth\u2019s gravity.\n\nRotate
+    the world\n\nFall to reposition\n\n\n\nII. Dual Resonance \u2014 Q\n\nToggle
+    between two existence states.\n\n1 \u2014 Physical State\n\n2 \u2014 Spectral
+    State\n\nShift forms to solve puzzles, bypass threats, and survive."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
