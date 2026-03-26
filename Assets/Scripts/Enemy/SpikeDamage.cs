@@ -14,7 +14,7 @@ public class SpikeDamage : MonoBehaviour
             if (Time.time >= nextDamageTime)
             {
                 // 调用你之前的血量脚本，并标记为 Trap 伤害
-                PlayerHealth health = other.GetComponent<PlayerHealth>();
+                PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
                 if (health != null)
                 {
                     health.TakeDamage(damageAmount, DeathCause.Spikes);

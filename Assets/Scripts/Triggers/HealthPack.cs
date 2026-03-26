@@ -9,7 +9,9 @@ public class HealthPack : MonoBehaviour
         // 确保碰撞体是玩家
         if (other.CompareTag("Player"))
         {
-            PlayerHealth health = other.GetComponent<PlayerHealth>();
+            Debug.Log("碰到玩家了");
+            PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
+            Debug.Log(health.ToString());
             if (health != null)
             {
                 health.RestoreHealth(healAmount); // 调用回血

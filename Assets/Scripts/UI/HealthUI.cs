@@ -24,6 +24,7 @@ public class HealthUI : MonoBehaviour
 
     public void _updateWithHealth(float newHealth)
     {
+       // Debug.Log("HealthUI 更新");
         _slider.value = newHealth;
 
         if (_slider.value <= 0)
