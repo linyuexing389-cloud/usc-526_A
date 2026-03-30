@@ -3,9 +3,10 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Full death screen: LOSE header + death cause bar chart + Retry button.
+/// Full death/win screen.
 /// Created programmatically so it works in both scenes without scene setup.
-/// Toggle with F2 during play; shown automatically on LOSE.
+/// Toggle with F2 during play; shown automatically on WIN/LOSE.
+/// Shows death cause bar chart ONLY on LOSE.
 /// </summary>
 public class DeathAnalyticsGraphUI : MonoBehaviour
 {
@@ -19,12 +20,24 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
     private GameObject root;
     private Image barTimeoutImg, barSpikesImg, barTrapImg;
     private Text countTimeout, countSpikes, countTrap;
+    private Text _headerText;
     private bool _isVisible = false;
+
+    // ─── [UI 引用对象] ───────────────────────────────────────────
+    private GameObject _statsTitleGo;
+    private GameObject _timeoutRowGo, _spikesRowGo, _trapRowGo;
+    
+    // 新增：两个按钮的引用
+    private GameObject _retryBtnGo;
+    private GameObject _menuBtnGo;
+    private Button _retryBtn;
+    private Button _menuBtn;
+    private RectTransform _menuBtnRect; // 用于在 WIN 时将菜单按钮居中
+    // ────────────────────────────────────────────────────────────
 
     private void Start()
     {
         EnsureCanvas();
-        // 如果 Show() 在 Start() 之前被调用（动态创建时），保持可见状态
         if (root != null && !_isVisible)
             root.SetActive(false);
     }
@@ -48,7 +61,11 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         _isVisible = true;
         EnsureCanvas();
         if (root == null) return;
-        RefreshBars();
+        
+        if (_statsTitleGo != null && _statsTitleGo.activeSelf)
+        {
+            RefreshBars();
+        }
         root.SetActive(true);
     }
 
@@ -64,13 +81,79 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         if (root == null) EnsureCanvas();
         if (root == null) return;
         if (root.activeSelf) Hide();
-        else { RefreshBars(); root.SetActive(true); }
+        else { Show(); }
     }
 
-    public static void ShowOnGameOver()
+    public static void ShowOnGameOver(bool isWin = false)
     {
-        var graph = FindObjectOfType<DeathAnalyticsGraphUI>();
-        if (graph != null) graph.Show();
+        var graph = FindAnyObjectByType<DeathAnalyticsGraphUI>();
+        
+        if (graph == null) 
+        {
+            var managerGo = GameObject.Find("DeathAnalyticsManager");
+            if (managerGo == null)
+            {
+                managerGo = new GameObject("DeathAnalyticsManager");
+                managerGo.AddComponent<DeathAnalyticsManager>(); 
+            }
+            graph = managerGo.AddComponent<DeathAnalyticsGraphUI>();
+        }
+
+        graph.ApplyState(isWin);
+        graph.Show();
+    }
+
+    private void ApplyState(bool isWin)
+    {
+        EnsureCanvas(); 
+
+        if (_headerText != null)
+        {
+            _headerText.text  = isWin ? "WIN" : "LOSE";
+            _headerText.color = isWin
+                ? new Color(1f, 0.82f, 0.1f)   // 金色
+                : new Color(0.95f, 0.25f, 0.25f); // 红色
+        }
+
+        // ─── [按钮排版与事件绑定逻辑] ─────────────────────────────────
+        // LOSE时显示Retry按钮，WIN时隐藏
+        if (_retryBtnGo != null) 
+            _retryBtnGo.SetActive(!isWin);
+
+        // Main Menu 按钮永远显示，但位置根据胜负状态变化
+        if (_menuBtnRect != null)
+        {
+            // WIN时居中 (X=0)，LOSE时偏右显示 (X=150) 与偏左的Retry并排
+            _menuBtnRect.anchoredPosition = isWin ? new Vector2(0, -255) : new Vector2(150, -255);
+        }
+
+        // 绑定重试事件
+        if (_retryBtn != null)
+        {
+            _retryBtn.onClick.RemoveAllListeners();
+            _retryBtn.onClick.AddListener(() => { 
+                if (GameManager.Instance != null) GameManager.Instance.RetryGame(); 
+            });
+        }
+
+        // 绑定返回主菜单事件
+        if (_menuBtn != null)
+        {
+            _menuBtn.onClick.RemoveAllListeners();
+            _menuBtn.onClick.AddListener(() => { 
+                Time.timeScale = 1; 
+                SceneManager.LoadScene("Scene_MainMenu"); 
+            });
+        }
+        // ────────────────────────────────────────────────────────────
+
+        // 统计图的显示/隐藏逻辑
+        bool showStats = !isWin;
+
+        if (_statsTitleGo != null) _statsTitleGo.SetActive(showStats);
+        if (_timeoutRowGo != null)  _timeoutRowGo.SetActive(showStats);
+        if (_spikesRowGo != null)   _spikesRowGo.SetActive(showStats);
+        if (_trapRowGo != null)     _trapRowGo.SetActive(showStats);
     }
 
     private void EnsureCanvas()
@@ -87,7 +170,6 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920, 1080);
         canvasGo.AddComponent<GraphicRaycaster>();
 
-        // Root panel — centered, fixed size
         root = new GameObject("DeathScreen");
         root.transform.SetParent(canvasGo.transform, false);
         var rootRect = root.AddComponent<RectTransform>();
@@ -102,81 +184,98 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
                  ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-        // ── LOSE header ──────────────────────────────────────────────
-        AddText(root, "LOSE", 96, FontStyle.Bold, new Vector2(0, 260), new Vector2(520, 110), font)
-            .color = new Color(0.95f, 0.25f, 0.25f);
+        // Header
+        _headerText = AddText(root, "LOSE", 96, FontStyle.Bold, new Vector2(0, 260), new Vector2(520, 110), font);
+        
+        // Stats
+        var statsTitleText = AddText(root, "Death Cause Distribution", 26, FontStyle.Normal, new Vector2(0, 175), new Vector2(460, 36), font);
+        statsTitleText.color = new Color(0.85f, 0.85f, 0.85f);
+        _statsTitleGo = statsTitleText.gameObject;
 
-        // ── Stats title ──────────────────────────────────────────────
-        AddText(root, "Death Cause Distribution", 26, FontStyle.Normal, new Vector2(0, 175), new Vector2(460, 36), font)
-            .color = new Color(0.85f, 0.85f, 0.85f);
-
-        // ── Bar rows ─────────────────────────────────────────────────
         float rowY = 100f;
         float rowH = 70f;
+        _timeoutRowGo = AddBarRow(root, "Timeout",       barTimeout, rowY,            font, out barTimeoutImg, out countTimeout);
+        _spikesRowGo  = AddBarRow(root, "Spikes (ball)", barSpikes,  rowY - rowH,     font, out barSpikesImg,  out countSpikes);
+        _trapRowGo    = AddBarRow(root, "Trap (wall)",   barTrap,    rowY - rowH * 2, font, out barTrapImg,    out countTrap);
 
-        barTimeoutImg = AddBarRow(root, "Timeout",       barTimeout, rowY,            font, out countTimeout);
-        barSpikesImg  = AddBarRow(root, "Spikes (ball)", barSpikes,  rowY - rowH,     font, out countSpikes);
-        barTrapImg    = AddBarRow(root, "Trap (wall)",   barTrap,    rowY - rowH * 2, font, out countTrap);
+        // ─── [创建两个按钮] ──────────────────────────────────────────
+        // 1. 创建 Retry 按钮 (绿色，偏左放置，X = -150)
+        _retryBtnGo = CreateButton(root, "RetryButton", "Retry", new Color(0.2f, 0.6f, 0.2f), new Vector2(-150, -255), font, out _retryBtn);
 
-        // ── Retry button ─────────────────────────────────────────────
-        var btnGo = new GameObject("RetryButton");
-        btnGo.transform.SetParent(root.transform, false);
-        var btnRect = btnGo.AddComponent<RectTransform>();
-        btnRect.anchorMin = new Vector2(0.5f, 0.5f);
-        btnRect.anchorMax = new Vector2(0.5f, 0.5f);
-        btnRect.pivot = new Vector2(0.5f, 0.5f);
-        btnRect.sizeDelta = new Vector2(240, 65);
-        btnRect.anchoredPosition = new Vector2(0, -255);
-
-        var btnImg = btnGo.AddComponent<Image>();
-        btnImg.color = new Color(0.2f, 0.6f, 0.2f);
-        btnGo.AddComponent<CanvasRenderer>();
-
-        var btn = btnGo.AddComponent<Button>();
-        btn.targetGraphic = btnImg;
-        var colors = btn.colors;
-        colors.highlightedColor = new Color(0.3f, 0.75f, 0.3f);
-        colors.pressedColor     = new Color(0.15f, 0.45f, 0.15f);
-        btn.colors = colors;
-        btn.onClick.AddListener(() =>
-        {
-            if (GameManager.Instance != null) GameManager.Instance.RetryGame();
-        });
-
-        var btnLabel = AddText(btnGo, "Retry", 32, FontStyle.Bold, Vector2.zero, new Vector2(240, 65), font);
-        btnLabel.color = Color.white;
-        btnLabel.alignment = TextAnchor.MiddleCenter;
+        // 2. 创建 Main Menu 按钮 (深蓝灰，偏右放置，X = 150)
+        _menuBtnGo = CreateButton(root, "MenuButton", "Main Menu", new Color(0.15f, 0.15f, 0.4f), new Vector2(150, -255), font, out _menuBtn);
+        _menuBtnRect = _menuBtnGo.GetComponent<RectTransform>(); // 保存 RectTransform 以便动态调整位置
+        // ────────────────────────────────────────────────────────────
     }
 
-    // Adds a horizontal bar row: [label]  [====bar====]  [count]
-    private Image AddBarRow(GameObject parent, string label, Color color, float y, Font font, out Text countText)
+    // 提取出一个辅助方法来快速生成标准按钮，减少重复代码
+    private GameObject CreateButton(GameObject parent, string btnName, string labelText, Color bgColor, Vector2 anchoredPos, Font font, out Button btn)
     {
+        var btnGo = new GameObject(btnName);
+        btnGo.transform.SetParent(parent.transform, false);
+        var rect = btnGo.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(240, 65);
+        rect.anchoredPosition = anchoredPos;
+
+        var img = btnGo.AddComponent<Image>();
+        img.color = bgColor;
+        btnGo.AddComponent<CanvasRenderer>();
+
+        btn = btnGo.AddComponent<Button>();
+        btn.targetGraphic = img;
+        var colors = btn.colors;
+        // 自动计算一下按钮的悬停和按下高亮颜色
+        colors.highlightedColor = new Color(bgColor.r + 0.15f, bgColor.g + 0.15f, bgColor.b + 0.15f);
+        colors.pressedColor     = new Color(bgColor.r - 0.1f,  bgColor.g - 0.1f,  bgColor.b - 0.1f);
+        btn.colors = colors;
+
+        var label = AddText(btnGo, labelText, 32, FontStyle.Bold, Vector2.zero, new Vector2(240, 65), font);
+        label.color = Color.white;
+        label.alignment = TextAnchor.MiddleCenter;
+
+        return btnGo;
+    }
+
+    private GameObject AddBarRow(GameObject parent, string label, Color color, float y, Font font, out Image barImg, out Text countText)
+    {
+        var rowGo = new GameObject("Row_" + label);
+        rowGo.transform.SetParent(parent.transform, false);
+        var rect = rowGo.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(800, 40); 
+        rect.anchoredPosition = new Vector2(0, y);
+
         float labelX = -185f;
         float barX   = -40f;
         float countX = 130f;
 
-        AddText(parent, label, 20, FontStyle.Normal, new Vector2(labelX, y), new Vector2(150, 32), font)
+        AddText(rowGo, label, 20, FontStyle.Normal, new Vector2(labelX, 0), new Vector2(150, 32), font)
             .alignment = TextAnchor.MiddleRight;
 
-        var barGo = new GameObject("Bar");
-        barGo.transform.SetParent(parent.transform, false);
+        var barGo = new GameObject("BarVisual");
+        barGo.transform.SetParent(rowGo.transform, false);
         var barRect = barGo.AddComponent<RectTransform>();
         barRect.anchorMin = new Vector2(0.5f, 0.5f);
         barRect.anchorMax = new Vector2(0.5f, 0.5f);
-        barRect.pivot = new Vector2(0f, 0.5f);  // grows right
+        barRect.pivot = new Vector2(0f, 0.5f);  
         barRect.sizeDelta = new Vector2(8f, 30f);
-        barRect.anchoredPosition = new Vector2(barX, y);
-        var barImg = barGo.AddComponent<Image>();
+        barRect.anchoredPosition = new Vector2(barX, 0);
+        barImg = barGo.AddComponent<Image>();
         barImg.color = color;
         barGo.AddComponent<CanvasRenderer>();
 
         var cntGo = new GameObject("Count");
-        cntGo.transform.SetParent(parent.transform, false);
+        cntGo.transform.SetParent(rowGo.transform, false);
         var cntRect = cntGo.AddComponent<RectTransform>();
         cntRect.anchorMin = new Vector2(0.5f, 0.5f);
         cntRect.anchorMax = new Vector2(0.5f, 0.5f);
         cntRect.sizeDelta = new Vector2(60, 32);
-        cntRect.anchoredPosition = new Vector2(countX, y);
+        cntRect.anchoredPosition = new Vector2(countX, 0);
         countText = cntGo.AddComponent<Text>();
         countText.font = font;
         countText.fontSize = 20;
@@ -184,7 +283,7 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         countText.text = "0";
         countText.alignment = TextAnchor.MiddleLeft;
 
-        return barImg;
+        return rowGo; 
     }
 
     private static Text AddText(GameObject parent, string content, int fontSize, FontStyle style,

@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using UnityEngine.UI; // 确保包含 UI 命名空间
 
 public class GameManager : MonoBehaviour
 {
@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
 
     [Header("关卡逻辑")]
     [Tooltip("如果是最后一关，请勾选此项；否则会尝试加载下一关")]
-    public bool isFinalLevel = true; // 默认设为 true，符合你现在的需求
+    public bool isFinalLevel = true; 
     public string nextSceneName = "cube_map 1";
 
     [Header("倒计时设置")]
@@ -19,17 +19,19 @@ public class GameManager : MonoBehaviour
 
     [Header("UI 引用")]
     public TextMeshProUGUI timerText;
-    public TextMeshProUGUI statusText; // WIN 时用
+    public TextMeshProUGUI statusText; 
 
     private void Awake()
     {
+        // [修复点 1] 核心：确保每次场景加载时，时间流逝立刻恢复正常
+        Time.timeScale = 1f;
+        
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
 
     void Start()
     {
-        Time.timeScale = 1;
         if (statusText != null) statusText.text = "";
     }
 
@@ -46,13 +48,13 @@ public class GameManager : MonoBehaviour
         {
             timeRemaining = 0;
 
-            // 记录一次超时死亡（没有直接 HP 变化）
             float hpRemaining = -1f;
             var player = FindAnyObjectByType<PlayerHealth>();
             if (player != null)
             {
                 hpRemaining = player.currentHealth;
             }
+            // 确保 DeathAnalyticsManager 已经定义并存在
             DeathAnalyticsManager.LogDeath(DeathCause.Timeout, timeRemaining, hpRemaining);
 
             LoseGame();
@@ -69,23 +71,10 @@ public class GameManager : MonoBehaviour
         timerText.color = (time <= 30f) ? Color.red : Color.white;
     }
 
-    // --- 核心逻辑修改点 ---
-
     public void WinGame()
     {
         if (isGameOver) return;
-
-        if (isFinalLevel)
-        {
-            // 如果是最后一关：显示胜利文字，停止游戏
-            EndGame("WIN");
-        }
-        else
-        {
-            // 如果不是最后一关：确保时间流动并跳转场景
-            Time.timeScale = 1; 
-            SceneManager.LoadScene(nextSceneName);
-        }
+        EndGame("WIN");
     }
 
     public void LoseGame()
@@ -98,23 +87,19 @@ public class GameManager : MonoBehaviour
     {
         isGameOver = true;
         
-        // 游戏结束时停止时间（如果是胜利，玩家可以停下来欣赏战果）
-        Time.timeScale = 0; 
+        // 游戏结束时停止时间
+        Time.timeScale = 0f; 
 
-        if (message == "LOSE")
-        {
-            DeathAnalyticsGraphUI.ShowOnGameOver();
-        }
-        else if (statusText != null)
-        {
-            statusText.text = message;
-            statusText.gameObject.SetActive(true);
-        }
+        // 确保 DeathAnalyticsGraphUI 已经定义并存在
+        DeathAnalyticsGraphUI.ShowOnGameOver(isWin: message == "WIN");
     }
 
     public void RetryGame()
     {
-        Time.timeScale = 1;
+        // [修复点 2] 在加载新场景前，强制恢复时间并停止所有可能卡住的协程
+        Time.timeScale = 1f;
+        StopAllCoroutines(); 
+        
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -134,9 +119,10 @@ public class GameManager : MonoBehaviour
         while (elapsed < duration)
         {
             timerText.alpha = 0f;
-            yield return new WaitForSeconds(interval);
+            // [修复点 3] 使用 WaitForSecondsRealtime 避免受 timeScale 变为 0 的影响
+            yield return new WaitForSecondsRealtime(interval);
             timerText.alpha = 1f;
-            yield return new WaitForSeconds(interval);
+            yield return new WaitForSecondsRealtime(interval);
             elapsed += interval * 2f;
         }
         timerText.alpha = 1f;
