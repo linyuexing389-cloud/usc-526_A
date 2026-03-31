@@ -33,6 +33,10 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         if (statusText != null) statusText.text = "";
+
+        DeathAnalyticsManager.EnsureInstance();
+        if (BetaAnalyticsManager.Instance != null)
+            BetaAnalyticsManager.Instance.BeginLevelSession();
     }
 
     void Update()
@@ -86,9 +90,18 @@ public class GameManager : MonoBehaviour
     private void EndGame(string message)
     {
         isGameOver = true;
-        
+
+        if (BetaAnalyticsManager.Instance != null)
+            BetaAnalyticsManager.Instance.LogSessionEnd(message == "WIN");
+
+        if (message == "WIN" && SceneManager.GetActiveScene().name == "tutorial_level")
+        {
+            PlayerPrefs.SetInt("TutorialCompleted", 1);
+            PlayerPrefs.Save();
+        }
+
         // 游戏结束时停止时间
-        Time.timeScale = 0f; 
+        Time.timeScale = 0f;
 
         // 确保 DeathAnalyticsGraphUI 已经定义并存在
         DeathAnalyticsGraphUI.ShowOnGameOver(isWin: message == "WIN");

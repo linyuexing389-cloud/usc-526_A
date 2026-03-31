@@ -5,13 +5,13 @@ using UnityEngine.SceneManagement;
 /// <summary>
 /// Full death/win screen.
 /// Created programmatically so it works in both scenes without scene setup.
-/// Toggle with F2 during play; shown automatically on WIN/LOSE.
+/// Toggle with G (or F2) during play; shown automatically on WIN/LOSE.
 /// Shows death cause bar chart ONLY on LOSE.
 /// </summary>
 public class DeathAnalyticsGraphUI : MonoBehaviour
 {
     [Header("Display")]
-    public KeyCode toggleKey = KeyCode.F2;
+    public KeyCode toggleKey = KeyCode.G; // primary toggle (WebGL/Mac); F2 also checked in Update
     public float barMaxWidth = 200f;
     public Color barTimeout = new Color(0.9f, 0.6f, 0.2f);
     public Color barSpikes = new Color(0.9f, 0.25f, 0.2f);
@@ -30,9 +30,13 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
     // 新增：两个按钮的引用
     private GameObject _retryBtnGo;
     private GameObject _menuBtnGo;
+    private GameObject _exportBtnGo;
     private Button _retryBtn;
     private Button _menuBtn;
+    private Button _exportBtn;
     private RectTransform _menuBtnRect; // 用于在 WIN 时将菜单按钮居中
+    private Text _sessionTimeText;
+    private Text _sessionCompletionText;
     // ────────────────────────────────────────────────────────────
 
     private void Start()
@@ -52,7 +56,8 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
+        // Allow both the configured key (default: G) and F2 for convenience.
+        if (Input.GetKeyDown(toggleKey) || Input.GetKeyDown(KeyCode.F2))
             Toggle();
     }
 
@@ -62,6 +67,7 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         EnsureCanvas();
         if (root == null) return;
         
+        RefreshSessionStats();
         if (_statsTitleGo != null && _statsTitleGo.activeSelf)
         {
             RefreshBars();
@@ -86,18 +92,8 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
 
     public static void ShowOnGameOver(bool isWin = false)
     {
+        DeathAnalyticsManager.EnsureInstance();
         var graph = FindAnyObjectByType<DeathAnalyticsGraphUI>();
-        
-        if (graph == null) 
-        {
-            var managerGo = GameObject.Find("DeathAnalyticsManager");
-            if (managerGo == null)
-            {
-                managerGo = new GameObject("DeathAnalyticsManager");
-                managerGo.AddComponent<DeathAnalyticsManager>(); 
-            }
-            graph = managerGo.AddComponent<DeathAnalyticsGraphUI>();
-        }
 
         graph.ApplyState(isWin);
         graph.Show();
@@ -147,6 +143,8 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         }
         // ────────────────────────────────────────────────────────────
 
+        RefreshSessionStats();
+
         // 统计图的显示/隐藏逻辑
         bool showStats = !isWin;
 
@@ -186,13 +184,18 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
 
         // Header
         _headerText = AddText(root, "LOSE", 96, FontStyle.Bold, new Vector2(0, 260), new Vector2(520, 110), font);
+
+        _sessionTimeText = AddText(root, "Time this level: —", 22, FontStyle.Normal, new Vector2(0, 200), new Vector2(760, 32), font);
+        _sessionTimeText.color = new Color(0.92f, 0.92f, 0.95f);
+        _sessionCompletionText = AddText(root, "This level completion: —", 22, FontStyle.Normal, new Vector2(0, 170), new Vector2(760, 32), font);
+        _sessionCompletionText.color = new Color(0.85f, 0.88f, 0.95f);
         
         // Stats
-        var statsTitleText = AddText(root, "Death Cause Distribution", 26, FontStyle.Normal, new Vector2(0, 175), new Vector2(460, 36), font);
+        var statsTitleText = AddText(root, "Death Cause Distribution", 26, FontStyle.Normal, new Vector2(0, 132), new Vector2(460, 36), font);
         statsTitleText.color = new Color(0.85f, 0.85f, 0.85f);
         _statsTitleGo = statsTitleText.gameObject;
 
-        float rowY = 100f;
+        float rowY = 58f;
         float rowH = 70f;
         _timeoutRowGo = AddBarRow(root, "Timeout",       barTimeout, rowY,            font, out barTimeoutImg, out countTimeout);
         _spikesRowGo  = AddBarRow(root, "Spikes (ball)", barSpikes,  rowY - rowH,     font, out barSpikesImg,  out countSpikes);
@@ -205,6 +208,19 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         // 2. 创建 Main Menu 按钮 (深蓝灰，偏右放置，X = 150)
         _menuBtnGo = CreateButton(root, "MenuButton", "Main Menu", new Color(0.15f, 0.15f, 0.4f), new Vector2(150, -255), font, out _menuBtn);
         _menuBtnRect = _menuBtnGo.GetComponent<RectTransform>(); // 保存 RectTransform 以便动态调整位置
+
+        _exportBtnGo = CreateButton(root, "ExportButton", "Export analytics (CSV)", new Color(0.25f, 0.25f, 0.3f), new Vector2(0, -335), font, out _exportBtn);
+        var exportRect = _exportBtnGo.GetComponent<RectTransform>();
+        exportRect.sizeDelta = new Vector2(420, 52);
+        if (_exportBtn != null)
+        {
+            _exportBtn.onClick.RemoveAllListeners();
+            _exportBtn.onClick.AddListener(() =>
+            {
+                if (BetaAnalyticsManager.Instance != null)
+                    BetaAnalyticsManager.Instance.ExportAllAnalytics();
+            });
+        }
         // ────────────────────────────────────────────────────────────
     }
 
@@ -306,6 +322,30 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         t.color = Color.white;
         t.alignment = TextAnchor.MiddleCenter;
         return t;
+    }
+
+    private void RefreshSessionStats()
+    {
+        if (_sessionTimeText == null || _sessionCompletionText == null)
+            return;
+
+        var beta = BetaAnalyticsManager.Instance;
+        if (beta == null)
+        {
+            _sessionTimeText.text = "Time this level: —";
+            _sessionCompletionText.text = "This level completion: —";
+            return;
+        }
+
+        float sec = beta.GetLastAttemptDurationSeconds();
+        _sessionTimeText.text = $"Time this level: {sec:F1} s";
+
+        var scene = SceneManager.GetActiveScene();
+        beta.GetCompletionStatsForScene(scene.name, out int w, out int l, out float pct);
+        int total = w + l;
+        _sessionCompletionText.text = total > 0
+            ? $"This level completion: {pct:F0}% ({w}W / {l}L)"
+            : "This level completion: —";
     }
 
     private void RefreshBars()
