@@ -34,6 +34,21 @@ public class DeathAnalyticsManager : MonoBehaviour
     private string csvPath;
     private readonly List<DeathRecord> records = new List<DeathRecord>();
 
+    /// <summary>Absolute path to death_log.csv (for export).</summary>
+    public string CsvAbsolutePath => csvPath;
+
+    /// <summary>Creates persistent analytics object: death logging, beta session/hazard logs, and end-game UI.</summary>
+    public static void EnsureInstance()
+    {
+        if (Instance != null)
+            return;
+
+        var go = new GameObject("DeathAnalyticsManager");
+        go.AddComponent<DeathAnalyticsManager>();
+        go.AddComponent<DeathAnalyticsGraphUI>();
+        go.AddComponent<BetaAnalyticsManager>();
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -58,13 +73,7 @@ public class DeathAnalyticsManager : MonoBehaviour
 
     public static void LogDeath(DeathCause cause, float timeRemaining, float hpRemaining)
     {
-        if (Instance == null)
-        {
-            var go = new GameObject("DeathAnalyticsManager");
-            Instance = go.AddComponent<DeathAnalyticsManager>();
-            go.AddComponent<DeathAnalyticsGraphUI>();
-        }
-
+        EnsureInstance();
         Instance.InternalLogDeath(cause, timeRemaining, hpRemaining);
     }
 
