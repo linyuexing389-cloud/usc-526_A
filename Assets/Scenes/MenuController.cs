@@ -9,7 +9,6 @@ public class MenuController : MonoBehaviour
     void Start()
     {
         // [双重保险] 确保每次回到主菜单时，时间流逝都是正常的
-        // 防止从 Win/Lose 界面返回后 timeScale 依然为 0
         Time.timeScale = 1f;
 
         // 确保开始面板是激活状态
@@ -35,5 +34,12 @@ public class MenuController : MonoBehaviour
     public void OnClickLoadCubeMap1()
     {
         SceneManager.LoadScene("cube_map 1");
+    }
+
+    // 4. 进入 新地图 (新增的代码)
+    public void OnClickLoadCubeMap2()
+    {
+        // 注意：这里的字符串必须和你的新场景文件名一模一样
+        SceneManager.LoadScene("cube_map 2"); 
     }
 }
