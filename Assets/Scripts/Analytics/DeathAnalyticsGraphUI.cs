@@ -5,13 +5,13 @@ using UnityEngine.SceneManagement;
 /// <summary>
 /// Full death/win screen.
 /// Created programmatically so it works in both scenes without scene setup.
-/// Toggle with F2 during play; shown automatically on WIN/LOSE.
+/// Toggle with G (or F2) during play; shown automatically on WIN/LOSE.
 /// Shows death cause bar chart ONLY on LOSE.
 /// </summary>
 public class DeathAnalyticsGraphUI : MonoBehaviour
 {
     [Header("Display")]
-    public KeyCode toggleKey = KeyCode.F2;
+    public KeyCode toggleKey = KeyCode.G; // primary toggle (WebGL/Mac); F2 also checked in Update
     public float barMaxWidth = 200f;
     public Color barTimeout = new Color(0.9f, 0.6f, 0.2f);
     public Color barSpikes = new Color(0.9f, 0.25f, 0.2f);
@@ -52,7 +52,8 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
+        // Allow both the configured key (default: G) and F2 for convenience.
+        if (Input.GetKeyDown(toggleKey) || Input.GetKeyDown(KeyCode.F2))
             Toggle();
     }
 
