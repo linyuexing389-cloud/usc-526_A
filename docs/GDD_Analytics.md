@@ -1,5 +1,7 @@
 # GDD: Analytics
 
+**Weekly progress (implementation):** [commit `a886db4` — level completion + time-per-level analytics](https://github.com/CSCI-526/main-assignment-ayce-every-week/commit/a886db434f792d8aab0fc8546764c17c8724f03d) (`feature/level-completion-and-time-analytics`). Update this link when you land a new milestone.
+
 Death cause distribution is unchanged (see `DeathAnalyticsManager`, `death_log.csv`, lose-screen bars). This document adds **level completion rate** and **time per level** only.
 
 ---
