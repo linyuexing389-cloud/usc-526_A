@@ -94,8 +94,14 @@ public class GameManager : MonoBehaviour
         if (BetaAnalyticsManager.Instance != null)
             BetaAnalyticsManager.Instance.LogSessionEnd(message == "WIN");
 
+        if (message == "WIN" && SceneManager.GetActiveScene().name == "tutorial_level")
+        {
+            PlayerPrefs.SetInt("TutorialCompleted", 1);
+            PlayerPrefs.Save();
+        }
+
         // 游戏结束时停止时间
-        Time.timeScale = 0f; 
+        Time.timeScale = 0f;
 
         // 确保 DeathAnalyticsGraphUI 已经定义并存在
         DeathAnalyticsGraphUI.ShowOnGameOver(isWin: message == "WIN");
