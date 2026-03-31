@@ -1,56 +1,45 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; 
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class MenuController : MonoBehaviour
 {
     [Header("UI 面板引用")]
     [SerializeField] private GameObject startPanel;
-    [SerializeField] private GameObject storyPanel;
-    [SerializeField] private GameObject mechanicsPanel; // 新增：机制说明面板
-
-    [Header("场景设置")]
-    public string gameSceneName = "cube_map"; 
 
     void Start()
     {
-        // 初始化：只显示第一个界面，其他全部隐藏
-        if (startPanel != null) startPanel.SetActive(true);
-        if (storyPanel != null) storyPanel.SetActive(false);
-        if (mechanicsPanel != null) mechanicsPanel.SetActive(false);
-    }
+        // [双重保险] 确保每次回到主菜单时，时间流逝都是正常的
+        Time.timeScale = 1f;
 
-    // --- 按钮事件 ---
-
-    // 1. 开始页面 -> 故事页面 (绑定到 StartPanel 的 Continue 按钮)
-    public void OnClickContinue()
-    {
-        SwitchPanel(startPanel, storyPanel);
-        Debug.Log("进入故事界面");
-    }
-
-    // 2. 故事页面 -> 机制页面 (绑定到 StoryPanel 的 Next/Continue 按钮)
-    public void OnClickNextToMechanics()
-    {
-        SwitchPanel(storyPanel, mechanicsPanel);
-        Debug.Log("进入机制说明界面");
-    }
-
-    // 3. 机制页面 -> 游戏场景 (绑定到 MechanicsPanel 的 Start 按钮)
-    public void OnClickStart()
-    {
-        if (string.IsNullOrEmpty(gameSceneName))
+        // 确保开始面板是激活状态
+        if (startPanel != null) 
         {
-            Debug.LogError("场景名称为空！");
-            return;
+            startPanel.SetActive(true);
         }
-        SceneManager.LoadScene(gameSceneName);
     }
 
-    // 提取的通用切换逻辑，让代码更干净
-    private void SwitchPanel(GameObject from, GameObject to)
+    // 1. 进入 教程关卡
+    public void OnClickLoadTutorial()
     {
-        if (from != null) from.SetActive(false);
-        if (to != null) to.SetActive(true);
+        SceneManager.LoadScene("tutorial_level");
+    }
+
+    // 2. 进入 地图一
+    public void OnClickLoadCubeMap()
+    {
+        SceneManager.LoadScene("cube_map");
+    }
+
+    // 3. 进入 地图二
+    public void OnClickLoadCubeMap1()
+    {
+        SceneManager.LoadScene("cube_map 1");
+    }
+
+    // 4. 进入 新地图 (新增的代码)
+    public void OnClickLoadCubeMap2()
+    {
+        // 注意：这里的字符串必须和你的新场景文件名一模一样
+        SceneManager.LoadScene("cube_map 2"); 
     }
 }
