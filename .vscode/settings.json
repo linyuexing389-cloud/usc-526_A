@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "game_jam.slnx"
+    "dotnet.defaultSolution": "main-assignment-ayce-every-week.slnx"
 }
