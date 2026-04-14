@@ -16,6 +16,8 @@ public class TimePowerup : MonoBehaviour
                 GameManager.Instance.AddTime(bonusTime);
             }
 
+            PickupPopupText.Show(transform.position, $"+{Mathf.RoundToInt(bonusTime)} s", new Color(0.08f, 0.08f, 0.08f));
+
             // 2. 销毁胶囊自己
             Destroy(gameObject);
             
