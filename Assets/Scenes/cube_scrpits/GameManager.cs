@@ -16,10 +16,17 @@ public class GameManager : MonoBehaviour
     [Header("倒计时设置")]
     public float timeRemaining = 120f;
     private bool isGameOver = false;
+    private bool isPaused = false;
 
     [Header("UI 引用")]
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI statusText; 
+
+    private GameObject pauseMenuRoot;
+    private Text pauseTitleText;
+    private Button resumeButton;
+    private Button retryButton;
+    private Button mainMenuButton;
 
     private void Awake()
     {
@@ -34,6 +41,9 @@ public class GameManager : MonoBehaviour
     {
         if (statusText != null) statusText.text = "";
 
+        EnsurePauseMenu();
+        HidePauseMenu();
+
         DeathAnalyticsManager.EnsureInstance();
         if (BetaAnalyticsManager.Instance != null)
             BetaAnalyticsManager.Instance.BeginLevelSession();
@@ -41,7 +51,13 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        if (!isGameOver && Input.GetKeyDown(KeyCode.Escape))
+        {
+            TogglePauseMenu();
+        }
+
         if (isGameOver) return;
+        if (isPaused) return;
 
         if (timeRemaining > 0)
         {
@@ -90,6 +106,7 @@ public class GameManager : MonoBehaviour
     private void EndGame(string message)
     {
         isGameOver = true;
+        HidePauseMenu();
 
         if (BetaAnalyticsManager.Instance != null)
             BetaAnalyticsManager.Instance.LogSessionEnd(message == "WIN");
@@ -110,10 +127,25 @@ public class GameManager : MonoBehaviour
     public void RetryGame()
     {
         // [修复点 2] 在加载新场景前，强制恢复时间并停止所有可能卡住的协程
+        isPaused = false;
         Time.timeScale = 1f;
         StopAllCoroutines(); 
         
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void ResumeGame()
+    {
+        if (isGameOver) return;
+        HidePauseMenu();
+    }
+
+    public void ReturnToMainMenu()
+    {
+        isPaused = false;
+        Time.timeScale = 1f;
+        StopAllCoroutines();
+        SceneManager.LoadScene("Scene_MainMenu");
     }
 
     public void AddTime(float amount)
@@ -140,5 +172,128 @@ public class GameManager : MonoBehaviour
         }
         timerText.alpha = 1f;
         _flashCoroutine = null;
+    }
+
+    private void TogglePauseMenu()
+    {
+        if (isPaused) HidePauseMenu();
+        else ShowPauseMenu();
+    }
+
+    private void ShowPauseMenu()
+    {
+        EnsurePauseMenu();
+        isPaused = true;
+        Time.timeScale = 0f;
+        if (pauseMenuRoot != null)
+            pauseMenuRoot.SetActive(true);
+    }
+
+    private void HidePauseMenu()
+    {
+        isPaused = false;
+        if (!isGameOver)
+            Time.timeScale = 1f;
+
+        if (pauseMenuRoot != null)
+            pauseMenuRoot.SetActive(false);
+    }
+
+    private void EnsurePauseMenu()
+    {
+        if (pauseMenuRoot != null) return;
+
+        var canvasGo = new GameObject("PauseMenuCanvas");
+        var canvas = canvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 90;
+        var scaler = canvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        canvasGo.AddComponent<GraphicRaycaster>();
+
+        pauseMenuRoot = new GameObject("PauseMenu");
+        pauseMenuRoot.transform.SetParent(canvasGo.transform, false);
+        var rootRect = pauseMenuRoot.AddComponent<RectTransform>();
+        rootRect.anchorMin = new Vector2(0.5f, 0.5f);
+        rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+        rootRect.pivot = new Vector2(0.5f, 0.5f);
+        rootRect.sizeDelta = new Vector2(760, 520);
+        rootRect.anchoredPosition = Vector2.zero;
+
+        var bg = pauseMenuRoot.AddComponent<Image>();
+        bg.color = new Color(0.05f, 0.07f, 0.12f, 0.96f);
+
+        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
+                 ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+        pauseTitleText = AddMenuText(pauseMenuRoot, "Paused", 78, FontStyle.Bold, new Vector2(0, 165), new Vector2(520, 100), font);
+        pauseTitleText.color = new Color(0.95f, 0.95f, 0.98f);
+
+        CreateMenuButton(pauseMenuRoot, "ResumeButton", "Resume", new Color(0.22f, 0.55f, 0.28f), new Vector2(0, 50), font, out resumeButton);
+        CreateMenuButton(pauseMenuRoot, "RetryButton", "Restart Level", new Color(0.28f, 0.36f, 0.7f), new Vector2(0, -45), font, out retryButton);
+        CreateMenuButton(pauseMenuRoot, "MainMenuButton", "Main Menu", new Color(0.42f, 0.24f, 0.22f), new Vector2(0, -140), font, out mainMenuButton);
+
+        resumeButton.onClick.AddListener(ResumeGame);
+        retryButton.onClick.AddListener(RetryGame);
+        mainMenuButton.onClick.AddListener(ReturnToMainMenu);
+    }
+
+    private static void CreateMenuButton(GameObject parent, string buttonName, string labelText, Color bgColor, Vector2 anchoredPos, Font font, out Button button)
+    {
+        var buttonGo = new GameObject(buttonName);
+        buttonGo.transform.SetParent(parent.transform, false);
+
+        var rect = buttonGo.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(340, 72);
+        rect.anchoredPosition = anchoredPos;
+
+        var image = buttonGo.AddComponent<Image>();
+        image.color = bgColor;
+        buttonGo.AddComponent<CanvasRenderer>();
+
+        button = buttonGo.AddComponent<Button>();
+        button.targetGraphic = image;
+
+        var colors = button.colors;
+        colors.highlightedColor = new Color(
+            Mathf.Clamp01(bgColor.r + 0.1f),
+            Mathf.Clamp01(bgColor.g + 0.1f),
+            Mathf.Clamp01(bgColor.b + 0.1f));
+        colors.pressedColor = new Color(
+            Mathf.Clamp01(bgColor.r - 0.08f),
+            Mathf.Clamp01(bgColor.g - 0.08f),
+            Mathf.Clamp01(bgColor.b - 0.08f));
+        button.colors = colors;
+
+        var label = AddMenuText(buttonGo, labelText, 30, FontStyle.Bold, Vector2.zero, new Vector2(340, 72), font);
+        label.alignment = TextAnchor.MiddleCenter;
+        label.color = Color.white;
+    }
+
+    private static Text AddMenuText(GameObject parent, string content, int fontSize, FontStyle style, Vector2 pos, Vector2 size, Font font)
+    {
+        var go = new GameObject("Text_" + content);
+        go.transform.SetParent(parent.transform, false);
+
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = size;
+        rect.anchoredPosition = pos;
+
+        go.AddComponent<CanvasRenderer>();
+        var text = go.AddComponent<Text>();
+        text.text = content;
+        text.fontSize = fontSize;
+        text.fontStyle = style;
+        text.alignment = TextAnchor.MiddleCenter;
+        text.color = Color.white;
+        if (font != null) text.font = font;
+        return text;
     }
 }
