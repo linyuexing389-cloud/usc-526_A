@@ -15,6 +15,7 @@ public class HealthPack : MonoBehaviour
             if (health != null)
             {
                 health.RestoreHealth(healAmount); // 调用回血
+                PickupPopupText.Show(transform.position, $"+{Mathf.RoundToInt(healAmount)}", new Color(0.82f, 0.18f, 0.18f));
                 Destroy(gameObject); // 吃完消失
             }
         }
