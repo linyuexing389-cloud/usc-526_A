@@ -13,6 +13,7 @@ public class Key : MonoBehaviour
             {
                 Debug.Log("player touched");
                 inventory.AddKey(colorID);
+                SoundManager.PlayKey(transform.position);
                 Destroy(gameObject); // 钥匙消失
             }
         }

@@ -44,6 +44,9 @@ public class FragilePlank : MonoBehaviour
 
     private void HandleBreakage()
     {
+        // 0. 播放破碎音效（一次性）
+        SoundManager.PlayWoodBreak(transform.position);
+
         // 1. 激活原本隐藏的内容 (SetActive)
         if (hiddenObjects != null)
         {
