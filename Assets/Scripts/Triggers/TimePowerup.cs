@@ -18,10 +18,11 @@ public class TimePowerup : MonoBehaviour
 
             PickupPopupText.Show(transform.position, $"+{Mathf.RoundToInt(bonusTime)} s", new Color(0.08f, 0.08f, 0.08f));
 
-            // 2. 销毁胶囊自己
+            // 2. 播放拾取音效
+            SoundManager.PlayHealthTime(transform.position);
+
+            // 3. 销毁胶囊自己
             Destroy(gameObject);
-            
-            // 提示：如果你想加个吃掉的声音，可以在 Destroy 之前写播放逻辑
         }
     }
 }

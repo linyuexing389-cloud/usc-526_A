@@ -16,6 +16,7 @@ public class HealthPack : MonoBehaviour
             {
                 health.RestoreHealth(healAmount); // 调用回血
                 PickupPopupText.Show(transform.position, $"+{Mathf.RoundToInt(healAmount)}", new Color(0.82f, 0.18f, 0.18f));
+                SoundManager.PlayHealthTime(transform.position);
                 Destroy(gameObject); // 吃完消失
             }
         }
