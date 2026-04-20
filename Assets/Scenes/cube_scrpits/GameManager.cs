@@ -108,6 +108,19 @@ public class GameManager : MonoBehaviour
         isGameOver = true;
         HidePauseMenu();
 
+        // 播放胜利/死亡音效
+        if (message == "WIN")
+        {
+            SoundManager.PlayWin(transform.position);
+        }
+        else
+        {
+            SoundManager.PlayDeath(transform.position);
+            // 死亡：停止 BGM，3 秒后重新播放
+            if (BGMManager.Instance != null)
+                BGMManager.Instance.StopAndRestart(3f);
+        }
+
         if (BetaAnalyticsManager.Instance != null)
             BetaAnalyticsManager.Instance.LogSessionEnd(message == "WIN");
 
