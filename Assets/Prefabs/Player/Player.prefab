@@ -227,7 +227,7 @@ MonoBehaviour:
   meshRenderer: {fileID: 3814565656223946640}
   normalMass: 1
   normalDamping: 0.5
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  normalColor: {r: 0.099012084, g: 0.8396226, b: 0.12693535, a: 1}
   heavyMass: 5
   heavyDamping: 0.01
   heavyColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}

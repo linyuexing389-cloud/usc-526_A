@@ -125,4 +125,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5770cefe7bf7c4f9295ac8fa3f07c5ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ColorDoor
-  requiredColor: Red
+  requiredColor: Yellow
