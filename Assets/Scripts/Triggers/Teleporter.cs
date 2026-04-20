@@ -20,6 +20,9 @@ public class Teleporter : MonoBehaviour
             // 注意：如果是 Rigidbody 控制的物体，直接改 transform.position 是最快的
             rb.transform.position = destination.position;
 
+            // 播放传送陷阱音效 (4.mp3)
+            SoundManager.PlayWin(transform.position);
+
             // 3. 物理逻辑：防止小球带着原来的惯性直接飞出地图
             if (resetVelocity)
             {
