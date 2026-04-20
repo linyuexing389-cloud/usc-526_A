@@ -33,7 +33,18 @@ public static class SoundManager
     private static void Play(AudioClip clip, Vector3 position, float volume = 1f)
     {
         if (clip == null) return;
-        AudioSource.PlayClipAtPoint(clip, position, volume);
+
+        if (BGMManager.Instance != null)
+        {
+            // 走 2D 共享通道，避免 3D 衰减导致听不见
+            BGMManager.Instance.PlaySFX(clip, volume);
+            BGMManager.Instance.Duck(clip.length + 0.3f);
+        }
+        else
+        {
+            // 兜底（BGMManager 还没初始化时）
+            AudioSource.PlayClipAtPoint(clip, position, volume);
+        }
     }
 
     public static void PlayKey(Vector3 position, float volume = 1f)
