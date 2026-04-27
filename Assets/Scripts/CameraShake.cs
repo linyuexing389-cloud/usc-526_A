@@ -9,15 +9,9 @@ public class CameraShake : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
+        // 不要 DontDestroyOnLoad 整个 Main Camera —— 否则 MainMenu 的相机会跑到关卡里把视角搞乱。
+        // 每个场景的 Main Camera 都有自己的 CameraShake，进入时直接接管 Instance。
         Instance = this;
-        DontDestroyOnLoad(gameObject);
-
         originalPos = transform.localPosition;
     }
 
