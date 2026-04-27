@@ -36,6 +36,10 @@ public class PlayerHealth : MonoBehaviour
         //UpdateUI();
         Heahtui._updateWithHealth(currentHealth);
 
+        // 播放受伤音效（除非这下子直接打死，由 Die→LoseGame 播放死亡音效）
+        if (currentHealth > 0)
+            SoundManager.PlayHurt(transform.position);
+
         if (currentHealth <= 0) Die();
     }
 

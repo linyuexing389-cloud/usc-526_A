@@ -193,6 +193,8 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
         _menuBtnGo = CreateButton(root, "MenuButton", "Main Menu", new Color(0.15f, 0.15f, 0.4f), new Vector2(150, -255), font, out _menuBtn);
         _menuBtnRect = _menuBtnGo.GetComponent<RectTransform>(); // 保存 RectTransform 以便动态调整位置
 
+        // Export 按钮已隐藏，但导出功能本身保留（可由其他入口调用 BetaAnalyticsManager.ExportAllAnalytics）
+        /*
         _exportBtnGo = CreateButton(root, "ExportButton", "Export analytics (CSV)", new Color(0.25f, 0.25f, 0.3f), new Vector2(0, -335), font, out _exportBtn);
         var exportRect = _exportBtnGo.GetComponent<RectTransform>();
         exportRect.sizeDelta = new Vector2(420, 52);
@@ -205,6 +207,7 @@ public class DeathAnalyticsGraphUI : MonoBehaviour
                     BetaAnalyticsManager.Instance.ExportAllAnalytics();
             });
         }
+        */
         // ────────────────────────────────────────────────────────────
     }
 
