@@ -12,6 +12,7 @@ public static class SoundManager
     private static AudioClip _woodBreakClip;
     private static AudioClip _winClip;
     private static AudioClip _deathClip;
+    private static AudioClip _hurtClip;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Preload()
@@ -22,6 +23,7 @@ public static class SoundManager
         _woodBreakClip  = Resources.Load<AudioClip>("Audio/3");
         _winClip        = Resources.Load<AudioClip>("Audio/4");
         _deathClip      = Resources.Load<AudioClip>("Audio/5");
+        _hurtClip       = Resources.Load<AudioClip>("Audio/hurt");
     }
 
     private static AudioClip Get(ref AudioClip cached, string path)
@@ -70,5 +72,10 @@ public static class SoundManager
     public static void PlayDeath(Vector3 position, float volume = 1f)
     {
         Play(Get(ref _deathClip, "Audio/5"), position, volume);
+    }
+
+    public static void PlayHurt(Vector3 position, float volume = 1f)
+    {
+        Play(Get(ref _hurtClip, "Audio/hurt"), position, volume);
     }
 }
